@@ -1,10 +1,8 @@
 export default async function handler(req, res) {
-  // Add CORS headers
-  res.setHeader("Access-Control-Allow-Origin", "*"); // For dev/testing. Use your domain for production!
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Handle preflight request
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -14,9 +12,24 @@ export default async function handler(req, res) {
   }
 
   const { session_id, step, timestamp, ...rest } = req.body;
-
-  // Log the step
   console.log(`[TRACK] ${timestamp} | ${session_id} | Step: ${step} | Extra:`, rest);
 
-  res.status(200).json({ message: 'Step logged' });
+  // 🟢 Forward to Zapier here:
+  try {
+    const zapierResp = await fetch('https://hooks.zapier.com/hooks/catch/21223948/2vt23bl/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body),
+    });
+
+    if (!zapierResp.ok) {
+      throw new Error(`Zapier error: ${zapierResp.statusText}`);
+    }
+  } catch (err) {
+    console.error('Error forwarding to Zapier:', err);
+    // Optionally send a different status code or message to frontend
+    return res.status(500).json({ message: 'Failed to forward to Zapier' });
+  }
+
+  res.status(200).json({ message: 'Step logged and sent to Zapier' });
 }
