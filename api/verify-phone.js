@@ -1,8 +1,8 @@
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*'); // 👈 This line fixes the error
+
   const { number } = req.query;
-
-  const url = const url = `https://apilayer.net/api/validate?access_key=bc1286a36597213e9e0f3d16d8642598&number=${number}&country_code=US`;
-
+  const url = `https://apilayer.net/api/validate?access_key=bc1286a36597213e9e0f3d16d8642598&number=${number}&country_code=US`;
 
   try {
     const response = await fetch(url);
@@ -12,3 +12,4 @@ export default async function handler(req, res) {
     res.status(500).json({ error: "Failed to validate phone number" });
   }
 }
+
