@@ -3,6 +3,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  console.log("Incoming body from quiz form:", req.body); // ✅ Add this
+
   try {
     await fetch("https://hooks.zapier.com/hooks/catch/21223948/2vctaqq/", {
       method: "POST",
