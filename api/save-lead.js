@@ -6,58 +6,45 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  // ✅ Allow CORS
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  // Handle CORS
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
   res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization'
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization"
   );
 
-  // ✅ Handle preflight
-  if (req.method === 'OPTIONS') {
+  // ✅ Stop here if it's a preflight OPTIONS request
+  if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  // ✅ Only allow POST
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const payload = req.body;
+    // ✅ Defensive JSON parsing
+    const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
 
-    console.log('Incoming payload:', JSON.stringify(payload, null, 2));
-
-    // Only insert fields you expect (important for security and consistency)
-    const insertData = {
-      first_name: payload['First Name'] || '',
-      last_name: payload['Last Name'] || '',
-      email: payload.email || '',
-      phone: payload.phone || '',
-      zip: payload.zip || '',
-      roof_type: payload.roof_type || '',
-      square_footage: payload.square_footage || '',
-      street: payload.street || '',
-      city: payload.city || '',
-      state: payload.state || '',
-      rtkclickid: payload.rtkclickid || '',
-      fbclid: payload.fbclid || '',
-      universal_leadid: payload.universal_leadid || '',
-      xxTrustedFormCertUrl: payload.xxTrustedFormCertUrl || '',
-      homeowner: payload.homeowner || false,
-    };
-
-    const { data, error } = await supabase.from('leads').insert([insertData]);
-
-    if (error) {
-      console.error('Supabase insert error:', error);
-      return res.status(500).json({ error: 'Failed to insert lead', detail: error });
+    if (!payload || typeof payload !== 'object') {
+      return res.status(400).json({ error: 'Invalid JSON format' });
     }
 
-    return res.status(200).json({ success: true, data });
+    console.log("Payload received:", payload);
+
+    const { error } = await supabase.from("leads").insert([payload]);
+
+    if (error) {
+      console.error("Supabase insert error:", error);
+      return res.status(500).json({ error: "Failed to insert lead" });
+    }
+
+    return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('Unexpected error:', err);
-    return res.status(500).json({ error: 'Unexpected server error' });
+    console.error("Unexpected server error:", err);
+    return res.status(500).json({ error: "Unexpected server error" });
   }
 }
