@@ -6,12 +6,17 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
+  // Handle CORS
+  res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization"
+  );
 
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    return res.status(200).end(); // Preflight response
   }
 
   if (req.method !== "POST") {
@@ -19,13 +24,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const data = req.body;
-    console.log("Received lead data:", data);
+    const payload = req.body;
+    console.log("Incoming payload:", JSON.stringify(payload, null, 2));
 
-    const { error } = await supabase.from("leads").insert([data]);
+    const { error } = await supabase.from("leads").insert([payload]);
 
     if (error) {
-      console.error("Supabase insert error:", error);
+      console.error("Supabase error:", error);
       return res.status(500).json({ error: "Failed to insert lead" });
     }
 
