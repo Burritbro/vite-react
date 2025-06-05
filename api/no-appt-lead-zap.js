@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   console.log("Incoming body from quiz form:", req.body);
 
   try {
-    await fetch("https://hooks.zapier.com/hooks/catch/21223948/2vctaqq/", {
+    await fetch("https://hooks.zapier.com/hooks/catch/21223948/2vp35a2/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(req.body),
