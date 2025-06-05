@@ -1,10 +1,17 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*"); // or specify origin instead of *
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
-    return res.status(200).end(); // preflight request
+    return res.status(200).end();
   }
 
   if (req.method !== "POST") {
@@ -13,12 +20,18 @@ export default async function handler(req, res) {
 
   try {
     const data = req.body;
+    console.log("Received lead data:", data);
 
-    // insert into Supabase or whatever you're doing here...
+    const { error } = await supabase.from("leads").insert([data]);
+
+    if (error) {
+      console.error("Supabase insert error:", error);
+      return res.status(500).json({ error: "Failed to insert lead" });
+    }
 
     return res.status(200).json({ success: true });
-  } catch (error) {
-    console.error("Save lead error:", error);
-    return res.status(500).json({ error: "Internal server error" });
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 }
