@@ -7,18 +7,20 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
   // Handle CORS
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization"
-  );
+// Top of your handler
+res.setHeader("Access-Control-Allow-Credentials", "true");
+res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:5500"); // or "*" temporarily
+res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
+res.setHeader(
+  "Access-Control-Allow-Headers",
+  "X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization"
+);
 
-  // ✅ Stop here if it's a preflight OPTIONS request
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+// Handle OPTIONS preflight
+if (req.method === "OPTIONS") {
+  return res.status(200).end();
+}
+
 
   // ✅ Only allow POST
   if (req.method !== "POST") {
