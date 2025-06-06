@@ -6,9 +6,8 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  // CORS headers (adjust origin as needed)
   res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Origin", "*"); // Set your allowed origin in production!
+  res.setHeader("Access-Control-Allow-Origin", "*"); // Restrict for prod!
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
   res.setHeader(
     "Access-Control-Allow-Headers",
@@ -22,26 +21,28 @@ export default async function handler(req, res) {
 
   try {
     const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-
     if (!payload || typeof payload !== 'object') {
       return res.status(400).json({ error: 'Invalid JSON format' });
     }
 
-    // Insert the full lead with appointment into your `lead_appointments` table
+    // Insert into appointments table
     const { error } = await supabase.from("lead_appointments").insert([payload]);
 
-    // Optionally update the status in your original `leads` table:
-   if (payload.universal_leadid) {
-  const { error: updateError } = await supabase
-    .from('leads')
-    .update({ appointment_status: 'booked' })
-    .eq('universal_leadid', payload.universal_leadid);
+    // Update original lead status
+    if (payload.universal_leadid) {
+      console.log("Updating appointment_status for universal_leadid:", payload.universal_leadid);
+      const { error: updateError, data } = await supabase
+        .from('leads')
+        .update({ appointment_status: 'booked' })
+        .eq('universal_leadid', payload.universal_leadid)
+        .select(); // Optional: returns updated rows
 
-  if (updateError) {
-    console.error("Failed to update appointment_status:", updateError);
-  }
-}
-
+      if (updateError) {
+        console.error("Failed to update appointment_status:", updateError);
+      } else {
+        console.log("Updated leads rows:", data);
+      }
+    }
 
     if (error) {
       console.error("Supabase insert error:", error);
