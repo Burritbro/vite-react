@@ -44,4 +44,41 @@ export default async function handler(req, res) {
   }
 
   // Handle PATCH/PUT request to update existing leads
-  if (req.method === "PATCH" || req.method === "PUT")
+  if (req.method === "PATCH" || req.method === "PUT") {
+    try {
+      const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+
+      // Example: Find lead by id or email (choose your unique identifier)
+      const { id, email, ...updateFields } = payload;
+
+      if (!id && !email) {
+        return res.status(400).json({ error: "Missing unique identifier (id or email)" });
+      }
+
+      let query = supabase.from("leads").update(updateFields);
+
+      // Use id if available, else use email
+      if (id) {
+        query = query.eq("id", id);
+      } else {
+        query = query.eq("email", email);
+      }
+
+      const { error } = await query;
+
+      if (error) {
+        console.error("Supabase update error:", error);
+        return res.status(500).json({ error: "Failed to update lead" });
+      }
+
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      console.error("Unexpected server error:", err);
+      return res.status(500).json({ error: "Unexpected server error" });
+    }
+  }
+
+  // All other methods
+  return res.status(405).json({ error: "Method not allowed" });
+}
+
