@@ -31,12 +31,17 @@ export default async function handler(req, res) {
     const { error } = await supabase.from("lead_appointments").insert([payload]);
 
     // Optionally update the status in your original `leads` table:
-    if (payload.universal_leadid) {
-      await supabase
-        .from('leads')
-        .update({ status: 'booked' })
-        .eq('universal_leadid', payload.universal_leadid); // or use universal_leadid if that's unique
-    }
+   if (payload.universal_leadid) {
+  const { error: updateError } = await supabase
+    .from('leads')
+    .update({ appointment_status: 'booked' })
+    .eq('universal_leadid', payload.universal_leadid);
+
+  if (updateError) {
+    console.error("Failed to update appointment_status:", updateError);
+  }
+}
+
 
     if (error) {
       console.error("Supabase insert error:", error);
