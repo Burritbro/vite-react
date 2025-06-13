@@ -39,6 +39,22 @@ export default async function handler(req, res) {
       if (!payload || typeof payload !== 'object') {
         return res.status(400).json({ error: 'Invalid JSON format' });
       }
+       // ✅ Retain TrustedForm certificate
+    const certUrl = payload.xxTrustedFormCertUrl;
+    if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
+      try {
+        await fetch(`${certUrl}/retain`, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Basic ' + Buffer.from(`${process.env.TRUSTEDFORM_API_KEY}:`).toString('base64'),
+          },
+        });
+      } catch (retainErr) {
+        console.error("TrustedForm retain error:", retainErr);
+        // Optional: decide if this should block lead insert or not
+      }
+    }
+
 
       const { error } = await supabase.from("lead_no_appointment").insert([payload]);
 
