@@ -7,8 +7,19 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
   // Handle CORS
+  const allowedOrigins = [
+    'http://127.0.0.1:5500',
+    'https://homeservicesdirect.org'
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  } else {
+    res.setHeader("Access-Control-Allow-Origin", "null");
+  }
+
   res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:5500"); // or "*" temporarily
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
   res.setHeader(
     "Access-Control-Allow-Headers",
@@ -48,7 +59,6 @@ export default async function handler(req, res) {
     try {
       const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
 
-      // Example: Find lead by id or email (choose your unique identifier)
       const { id, email, ...updateFields } = payload;
 
       if (!id && !email) {
@@ -57,7 +67,6 @@ export default async function handler(req, res) {
 
       let query = supabase.from("leads_siding").update(updateFields);
 
-      // Use id if available, else use email
       if (id) {
         query = query.eq("id", id);
       } else {
