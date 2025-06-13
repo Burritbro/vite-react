@@ -40,7 +40,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid JSON format' });
       }
        // ✅ Retain TrustedForm certificate
-    const certUrl = payload.xxTrustedFormCertUrl;
+    const certUrl = payload.xxTrustedFormToken;
     if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
       try {
         await fetch(`${certUrl}/retain`, {
