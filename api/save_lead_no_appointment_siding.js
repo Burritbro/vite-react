@@ -82,9 +82,9 @@ export default async function handler(req, res) {
         rtkclickid: payload.rtkclickid,
         gclid: payload.gclid,
 
-        trustedform_cert_url: payload.xxTrustedForm,
-        jornaya_leadid: payload.leadid_tcpa_d,
-        tcpa_text: "By clicking ‘Submit’ I agree by electronic signature to be contacted by [Company Name]",
+        trustedform_cert_url: payload.xxTrustedFormToken,
+        jornaya_leadid: payload.universal_leadid,
+        tcpa_text: payload.leadid_tcpa_disclosure,
         landing_page_url: "https://homeservicesdirect.org",
         ip_address: req.headers["x-forwarded-for"] || req.socket.remoteAddress,
         user_agent: req.headers["user-agent"],
