@@ -11,6 +11,7 @@ export default async function handler(req, res) {
     'http://127.0.0.1:5500',
     'https://homeservicesdirect.org'
   ];
+  
 
   const origin = req.headers.origin;
   res.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes(origin) ? origin : "null");
