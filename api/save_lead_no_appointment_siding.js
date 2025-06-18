@@ -13,25 +13,16 @@ export default async function handler(req, res) {
   ];
 
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  } else {
-    res.setHeader("Access-Control-Allow-Origin", "null");
-  }
-
+  res.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes(origin) ? origin : "null");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization"
-  );
+  res.setHeader("Access-Control-Allow-Headers", "X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization");
 
-  // Handle OPTIONS preflight
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  // Handle POST request to insert new leads
+  // ✅ POST Handler
   if (req.method === "POST") {
     try {
       const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
@@ -39,32 +30,33 @@ export default async function handler(req, res) {
       if (!payload || typeof payload !== 'object') {
         return res.status(400).json({ error: 'Invalid JSON format' });
       }
-         // ✅ Retain TrustedForm certificate
-const certUrl = payload.xxTrustedFormPingUrl;
-if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
-  try {
-    const retainRes = await fetch(`${certUrl}/retain`, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${process.env.TRUSTEDFORM_API_KEY}:`).toString('base64'),
-      },
-    });
 
-    const retainText = await retainRes.text();
-    console.log("✅ TrustedForm retain response:", retainRes.status, retainText);
-  } catch (retainErr) {
-    console.error("❌ TrustedForm retain error:", retainErr);
-  }
-}
+      // 🔒 TrustedForm retain
+      const certUrl = payload.xxTrustedFormPingUrl;
+      if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
+        try {
+          const retainRes = await fetch(`${certUrl}/retain`, {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Basic ' + Buffer.from(`${process.env.TRUSTEDFORM_API_KEY}:`).toString('base64'),
+            },
+          });
 
-     const { error } = await supabase.from("leads_siding").insert([payload]);
+          const retainText = await retainRes.text();
+          console.log("✅ TrustedForm retain response:", retainRes.status, retainText);
+        } catch (retainErr) {
+          console.error("❌ TrustedForm retain error:", retainErr);
+        }
+      }
 
+      // 🛠 Supabase insert
+      const { error } = await supabase.from("leads_siding").insert([payload]);
       if (error) {
         console.error("Supabase insert error:", error);
         return res.status(500).json({ error: "Failed to insert lead" });
       }
 
-      // ✅ Forward to LeadProsper
+      // 🚀 LeadProsper post
       const leadProsperPayload = {
         lp_campaign_id: "28098",
         lp_supplier_id: "82262",
@@ -110,13 +102,16 @@ if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
       }
 
       return res.status(200).json({ success: true });
-  }
+    } catch (err) {
+      console.error("Unexpected POST error:", err);
+      return res.status(500).json({ error: "Server error" });
+    }
+  } // ✅ Closing brace for POST
 
-  // Handle PATCH/PUT request to update existing leads
+  // 🔁 PATCH/PUT handler
   if (req.method === "PATCH" || req.method === "PUT") {
     try {
       const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-
       const { id, email, ...updateFields } = payload;
 
       if (!id && !email) {
@@ -124,12 +119,7 @@ if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
       }
 
       let query = supabase.from("leads_siding").update(updateFields);
-
-      if (id) {
-        query = query.eq("id", id);
-      } else {
-        query = query.eq("email", email);
-      }
+      query = id ? query.eq("id", id) : query.eq("email", email);
 
       const { error } = await query;
 
@@ -145,6 +135,5 @@ if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
     }
   }
 
-  // All other methods
   return res.status(405).json({ error: "Method not allowed" });
 }
