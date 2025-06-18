@@ -52,7 +52,7 @@ export default async function handler(req, res) {
 
 
       // 🛠 Supabase insert
-      const { error } = await supabase.from("leads_no_appointment").insert([payload]);
+      const { error } = await supabase.from("lead_no_appointment").insert([payload]);
       if (error) {
         console.error("Supabase insert error:", error);
         return res.status(500).json({ error: "Failed to insert lead" });
@@ -120,7 +120,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Missing unique identifier (id or email)" });
       }
 
-      let query = supabase.from("leads_siding").update(updateFields);
+      let query = supabase.from("lead_no_appointment").update(updateFields);
       query = id ? query.eq("id", id) : query.eq("email", email);
 
       const { error } = await query;
