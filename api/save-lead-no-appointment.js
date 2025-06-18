@@ -11,27 +11,19 @@ export default async function handler(req, res) {
     'http://127.0.0.1:5500',
     'https://homeservicesdirect.org'
   ];
+  
 
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  } else {
-    res.setHeader("Access-Control-Allow-Origin", "null");
-  }
-
+  res.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes(origin) ? origin : "null");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization"
-  );
+  res.setHeader("Access-Control-Allow-Headers", "X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization");
 
-  // Handle OPTIONS preflight
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  // Handle POST request to insert new leads
+  // ✅ POST Handler
   if (req.method === "POST") {
     try {
       const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
@@ -39,59 +31,97 @@ export default async function handler(req, res) {
       if (!payload || typeof payload !== 'object') {
         return res.status(400).json({ error: 'Invalid JSON format' });
       }
-       // ✅ Retain TrustedForm certificate
-   // ✅ Retain TrustedForm certificate
-const certUrl = payload.xxTrustedFormPingUrl;
-if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
-  try {
-    const retainRes = await fetch(`${certUrl}/retain`, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${process.env.TRUSTEDFORM_API_KEY}:`).toString('base64'),
-      },
-    });
 
-    const retainText = await retainRes.text();
-    console.log("✅ TrustedForm retain response:", retainRes.status, retainText);
-  } catch (retainErr) {
-    console.error("❌ TrustedForm retain error:", retainErr);
-  }
-}
+      // 🔒 TrustedForm retain
+    const certUrl = payload.xxTrustedFormPingUrl;
+    if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
+      try {
+        const retainRes = await fetch(`${certUrl}/retain`, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Basic ' + Buffer.from(`${process.env.TRUSTEDFORM_API_KEY}:`).toString('base64'),
+          },
+        });
+    
+        const retainText = await retainRes.text();
+        console.log("✅ TrustedForm retain response:", retainRes.status, retainText);
+      } catch (retainErr) {
+        console.error("❌ TrustedForm retain error:", retainErr);
+      }
+    }
 
 
-
-      const { error } = await supabase.from("lead_no_appointment").insert([payload]);
-
+      // 🛠 Supabase insert
+      const { error } = await supabase.from("leads_siding").insert([payload]);
       if (error) {
         console.error("Supabase insert error:", error);
         return res.status(500).json({ error: "Failed to insert lead" });
       }
 
+      // 🚀 LeadProsper post
+      const leadProsperPayload = {
+        lp_campaign_id: "28018",
+        lp_supplier_id: "81932",
+        lp_key: process.env.LEADPROSPER_API_KEY_ROOF,
+        lp_action: "",
+
+        first_name: payload.first_name,
+        last_name: payload.last_name,
+        email: payload.email,
+        phone: payload.phone,
+        zip_code: payload.zip,
+        city: payload.city,
+        state: payload.state,
+        address: payload.street,
+
+        siding_type: payload.roof,
+        project_type: payload.job_type,
+        homeowner: payload.homeowner,
+
+        fbclid: payload.fbclid,
+        rtkclickid: payload.rtkclickid,
+        gclid: payload.gclid,
+
+        trustedform_cert_url: payload.xxTrustedFormToken,
+        jornaya_leadid: payload.universal_leadid,
+        tcpa_text: payload.leadid_tcpa_disclosure,
+        landing_page_url: "https://homeservicesdirect.org",
+        ip_address: req.headers["x-forwarded-for"] || req.socket.remoteAddress,
+        user_agent: req.headers["user-agent"],
+      };
+
+      try {
+        const lpRes = await fetch("https://api.leadprosper.io/direct_post", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(leadProsperPayload),
+        });
+
+        const lpData = await lpRes.json();
+        console.log("✅ LeadProsper response:", lpData);
+      } catch (lpError) {
+        console.error("❌ LeadProsper forward error:", lpError);
+      }
+
       return res.status(200).json({ success: true });
     } catch (err) {
-      console.error("Unexpected server error:", err);
-      return res.status(500).json({ error: "Unexpected server error" });
+      console.error("Unexpected POST error:", err);
+      return res.status(500).json({ error: "Server error" });
     }
-  }
+  } // ✅ Closing brace for POST
 
-  // Handle PATCH/PUT request to update existing leads
+  // 🔁 PATCH/PUT handler
   if (req.method === "PATCH" || req.method === "PUT") {
     try {
       const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-
       const { id, email, ...updateFields } = payload;
 
       if (!id && !email) {
         return res.status(400).json({ error: "Missing unique identifier (id or email)" });
       }
 
-      let query = supabase.from("lead_no_appointment").update(updateFields);
-
-      if (id) {
-        query = query.eq("id", id);
-      } else {
-        query = query.eq("email", email);
-      }
+      let query = supabase.from("leads_siding").update(updateFields);
+      query = id ? query.eq("id", id) : query.eq("email", email);
 
       const { error } = await query;
 
@@ -107,6 +137,5 @@ if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
     }
   }
 
-  // All other methods
   return res.status(405).json({ error: "Method not allowed" });
 }
