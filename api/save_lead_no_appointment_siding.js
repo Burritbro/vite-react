@@ -32,22 +32,23 @@ export default async function handler(req, res) {
       }
 
       // 🔒 TrustedForm retain
-      const certUrl = payload.xxTrustedFormPingUrl;
-      if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
-        try {
-          const retainRes = await fetch(`${certUrl}/retain`, {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Basic ' + Buffer.from(`${process.env.TRUSTEDFORM_API_KEY}:`).toString('base64'),
-            },
-          });
-
-          const retainText = await retainRes.text();
-          console.log("✅ TrustedForm retain response:", retainRes.status, retainText);
-        } catch (retainErr) {
-          console.error("❌ TrustedForm retain error:", retainErr);
-        }
+    const certUrl = payload.xxTrustedFormPingUrl;
+    if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
+      try {
+        const retainRes = await fetch(`${certUrl}/retain`, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Basic ' + Buffer.from(`${process.env.TRUSTEDFORM_API_KEY}:`).toString('base64'),
+          },
+        });
+    
+        const retainText = await retainRes.text();
+        console.log("✅ TrustedForm retain response:", retainRes.status, retainText);
+      } catch (retainErr) {
+        console.error("❌ TrustedForm retain error:", retainErr);
       }
+    }
+
 
       // 🛠 Supabase insert
       const { error } = await supabase.from("leads_siding").insert([payload]);
