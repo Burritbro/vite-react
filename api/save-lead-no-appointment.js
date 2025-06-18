@@ -52,7 +52,7 @@ export default async function handler(req, res) {
 
 
       // 🛠 Supabase insert
-      const { error } = await supabase.from("leads_siding").insert([payload]);
+      const { error } = await supabase.from("leads_no_appointment").insert([payload]);
       if (error) {
         console.error("Supabase insert error:", error);
         return res.status(500).json({ error: "Failed to insert lead" });
