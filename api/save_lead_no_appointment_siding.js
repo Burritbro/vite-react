@@ -57,18 +57,59 @@ if (certUrl && certUrl.startsWith("https://cert.trustedform.com/")) {
   }
 }
 
-      const { error } = await supabase.from("leads_siding").insert([payload]);
+     const { error } = await supabase.from("leads_siding").insert([payload]);
 
       if (error) {
         console.error("Supabase insert error:", error);
         return res.status(500).json({ error: "Failed to insert lead" });
       }
 
+      // ✅ Forward to LeadProsper
+      const leadProsperPayload = {
+        lp_campaign_id: "28098",
+        lp_supplier_id: "82262",
+        lp_key: process.env.LEADPROSPER_API_KEY,
+        lp_action: "",
+
+        first_name: payload.first_name,
+        last_name: payload.last_name,
+        email: payload.email,
+        phone: payload.phone,
+        zip_code: payload.zip,
+        city: payload.city,
+        state: payload.state,
+        address: payload.street,
+
+        siding_type: payload.roof_type,
+        project_type: payload.job_type,
+        homeowner: payload.homeowner,
+
+        fbclid: payload.fbclid,
+        rtkclickid: payload.rtkclickid,
+        gclid: payload.gclid,
+
+        trustedform_cert_url: payload.xxTrustedForm,
+        jornaya_leadid: payload.leadid_tcpa_d,
+        tcpa_text: "By clicking ‘Submit’ I agree by electronic signature to be contacted by [Company Name]",
+        landing_page_url: "https://homeservicesdirect.org",
+        ip_address: req.headers["x-forwarded-for"] || req.socket.remoteAddress,
+        user_agent: req.headers["user-agent"],
+      };
+
+      try {
+        const lpRes = await fetch("https://api.leadprosper.io/direct_post", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(leadProsperPayload),
+        });
+
+        const lpData = await lpRes.json();
+        console.log("✅ LeadProsper response:", lpData);
+      } catch (lpError) {
+        console.error("❌ LeadProsper forward error:", lpError);
+      }
+
       return res.status(200).json({ success: true });
-    } catch (err) {
-      console.error("Unexpected server error:", err);
-      return res.status(500).json({ error: "Unexpected server error" });
-    }
   }
 
   // Handle PATCH/PUT request to update existing leads
