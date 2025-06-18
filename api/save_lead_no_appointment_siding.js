@@ -62,7 +62,7 @@ export default async function handler(req, res) {
       const leadProsperPayload = {
         lp_campaign_id: "28098",
         lp_supplier_id: "82262",
-        lp_key: process.env.LEADPROSPER_API_KEY,
+        lp_key: process.env.LEADPROSPER_API_KEY_SIDING,
         lp_action: "",
 
         first_name: payload.first_name,
