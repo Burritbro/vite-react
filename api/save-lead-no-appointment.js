@@ -75,7 +75,7 @@ export default async function handler(req, res) {
         address: payload.street,
 
         roof_type: payload.roof_type,
-        job_type: payload.job_type,
+        repair_replace: payload.repair_replace, // may need to rename if buyer uses "repair_replace"
         homeowner: payload.homeowner,
 
         fbclid: payload.fbclid,
