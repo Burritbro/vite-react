@@ -75,7 +75,7 @@ export default async function handler(req, res) {
         address: payload.street,
 
         siding_type: payload.siding_type,
-        project_type: payload.job_type,
+        repair_replace: payload.repair_replace,
         homeowner: payload.homeowner,
 
         fbclid: payload.fbclid,
