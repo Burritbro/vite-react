@@ -81,7 +81,7 @@ export default async function handler(req, res) {
         fbclid: payload.fbclid,
         rtkclickid: payload.rtkclickid,
         gclid: payload.gclid,
-        CALLBACK_PARAM: payload.CALLBACK_PARAM,
+        nb_cid: payload.nb_cid,
 
         trustedform_cert_url: payload.xxTrustedFormToken,
         jornaya_leadid: payload.universal_leadid,
