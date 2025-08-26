@@ -73,8 +73,7 @@ export default async function handler(req, res) {
         city: payload.city,
         state: payload.state,
         address: payload.street,
-
-        roof_type: payload.roof_type,
+        
         install_pref: payload.install_pref, // may need to rename if buyer uses "repair_replace"
         features: payload.features,
         system_type: payload.system_type,
