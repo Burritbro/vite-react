@@ -14,7 +14,6 @@ export default async function handler(req, res) {
   'http://localhost:5500',
   ];
   
-
   
   const origin = req.headers.origin;
   res.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes(origin) ? origin : "null");
