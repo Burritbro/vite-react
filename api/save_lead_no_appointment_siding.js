@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   // Handle CORS
   const allowedOrigins = [
     'http://127.0.0.1:5500',
-    'https://homeservicesdirect.org'
+    'https://homesidingdirect.com'
   ];
   
 
